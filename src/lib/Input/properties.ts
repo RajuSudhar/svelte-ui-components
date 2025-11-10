@@ -1,3 +1,4 @@
+import type { Snippet } from 'svelte';
 import type {
   AutoCompleteType,
   CustomValidator,
@@ -20,8 +21,10 @@ export type OptionalInputProperties = {
   label?: string | null;
   onErrorMessage?: string | null;
   infoMessage?: string | null;
+  imageUrl?: string | null;
   validators?: CustomValidator[];
   disable?: boolean;
+  filterPattern?: RegExp | null;
   validationPattern?: RegExp | null;
   inProgressPattern?: RegExp | null;
   addFocusColor?: boolean;
@@ -33,10 +36,13 @@ export type OptionalInputProperties = {
   name?: string;
   textTransformers?: TextTransformer[];
   testId?: string;
+  leftContent?: Snippet;
+  rightContent?: Snippet;
 };
 
 export type InputEventProperties = {
   onInput?: (value: string, event: Event) => void;
+  onFocus?: (event: FocusEvent) => void;
   onFocusout?: (event: FocusEvent) => void;
   onPaste?: (event: ClipboardEvent) => void;
   onClick?: (event: MouseEvent) => void;
