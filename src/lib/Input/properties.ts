@@ -12,6 +12,8 @@ export type InputProperties = {
   validators: CustomValidator[];
   focus: boolean;
   disable: boolean;
+  imageUrl?: string | null;
+  filterPattern: RegExp | null;
   validationPattern: RegExp | null;
   inProgressPattern: RegExp | null;
   addFocusColor: boolean;
@@ -37,6 +39,7 @@ export const defaultInputProperties: InputProperties = {
   validators: [],
   focus: true,
   disable: false,
+  filterPattern: null,
   validationPattern: null,
   inProgressPattern: null,
   addFocusColor: false,

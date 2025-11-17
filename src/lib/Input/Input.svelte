@@ -9,6 +9,8 @@
   export let properties: InputProperties = defaultInputProperties;
   let inputElement: HTMLInputElement | HTMLTextAreaElement;
 
+  let isFocused: boolean = false;
+
   $: state = getValidationState(properties) as ValidationState;
 
   // For making this function reactive, prop was passed as param
@@ -53,7 +55,10 @@
         let newValue = currIndexFunction(prevValue);
         return newValue;
       }, currentValue);
-      currentValue = currentValue.replace(/\D+|\D/gm, '');
+      currentValue =
+        properties.filterPattern !== null
+          ? currentValue.replace(properties.filterPattern, '')
+          : currentValue.replace(/\D+|\D/gm, '');
       const numberLength = currentValue.length;
       /**
        * ignore all entered inputs and return if input is non numeric
@@ -104,7 +109,10 @@
         /**
          * removes everything except numbers
          */
-        const filteredNumber = unfilteredNumber.replace(/\D+|\D/gm, '');
+        const filteredNumber =
+          properties.filterPattern !== null
+            ? unfilteredNumber.replace(properties.filterPattern, '')
+            : unfilteredNumber.replace(/\D+|\D/gm, '');
         const filteredNumberLength = filteredNumber.length;
         /**
          * pasted text is non numeric
@@ -138,7 +146,13 @@
     if (state === 'InProgress' && properties.value.length > 0) {
       state = 'Invalid';
     }
+    isFocused = false;
     dispatch('focusout', event);
+  }
+
+  function onFocus(event: FocusEvent) {
+    isFocused = true;
+    dispatch('focus', event);
   }
 
   function onClick(event: MouseEvent) {
@@ -163,54 +177,71 @@
     </label>
   {/if}
 
-  {#if properties.useTextArea}
-    <textarea
-      value={properties.value}
-      placeholder={properties.placeholder}
-      autocomplete={properties.autoComplete}
-      name={properties.name}
-      on:keydown
-      on:keyup
-      on:keypress
-      on:focus
-      on:focusout={onFocusOut}
-      on:input={onInput}
-      on:paste={onPaste}
-      on:click={onClick}
-      class="
-        {properties.actionInput ? 'action-input' : ''}
-      "
-      style="--focus-border: {properties.addFocusColor ? 1 : 0}px;"
-      disabled={properties.disable}
-      bind:this={inputElement}
-      maxlength={properties.dataType === 'tel' ? undefined : properties.maxLength}
-      minlength={properties.minLength}
-    />
-  {:else}
-    <input
-      type={properties.dataType}
-      value={properties.value}
-      placeholder={properties.placeholder}
-      autocomplete={properties.autoComplete}
-      name={properties.name}
-      on:keydown
-      on:keyup
-      on:keypress
-      on:focus
-      on:focusout={onFocusOut}
-      on:input={onInput}
-      on:paste={onPaste}
-      on:click={onClick}
-      data-pw={properties.testId}
-      class="
-      {properties.actionInput ? 'action-input' : ''}
-    "
-      disabled={properties.disable}
-      bind:this={inputElement}
-      maxlength={properties.dataType === 'tel' ? undefined : properties.maxLength}
-      minlength={properties.minLength}
-    />
-  {/if}
+  <div class="input-wrapper {isFocused ? 'input-wrapper-focus' : ''}">
+    <div class="input-element">
+      {#if properties.useTextArea}
+        <textarea
+          value={properties.value}
+          placeholder={properties.placeholder}
+          autocomplete={properties.autoComplete}
+          name={properties.name}
+          on:keydown
+          on:keyup
+          on:keypress
+          on:focus={onFocus}
+          on:focusout={onFocusOut}
+          on:input={onInput}
+          on:paste={onPaste}
+          on:click={onClick}
+          class={properties.actionInput ? 'action-input' : ''}
+          disabled={properties.disable}
+          bind:this={inputElement}
+          maxlength={properties.dataType === 'tel' ? undefined : properties.maxLength}
+          minlength={properties.minLength}
+        />
+      {:else}
+        <input
+          type={properties.dataType}
+          value={properties.value}
+          placeholder={properties.placeholder}
+          autocomplete={properties.autoComplete}
+          name={properties.name}
+          on:keydown
+          on:keyup
+          on:keypress
+          on:focus={onFocus}
+          on:focusout={onFocusOut}
+          on:input={onInput}
+          on:paste={onPaste}
+          on:click={onClick}
+          data-pw={properties.testId}
+          class={properties.actionInput ? 'action-input' : ''}
+          disabled={properties.disable}
+          bind:this={inputElement}
+          maxlength={properties.dataType === 'tel' ? undefined : properties.maxLength}
+          minlength={properties.minLength}
+        />
+      {/if}
+    </div>
+
+    {#if $$slots.leftContent}
+      <div class="left-content">
+        <slot name="leftContent" />
+      </div>
+    {/if}
+
+    {#if properties.imageUrl}
+      <div class="image-container">
+        <img class="input-image" src={properties.imageUrl} alt="" />
+      </div>
+    {/if}
+
+    {#if $$slots.rightContent}
+      <div class="right-content">
+        <slot name="rightContent" />
+      </div>
+    {/if}
+  </div>
 
   {#if properties.message.onError !== '' && showErrorMessage && !properties.actionInput}
     <div class="error-message">
@@ -227,28 +258,46 @@
 <style>
   textarea,
   input {
-    box-sizing: var(--input-box-sizing, border-box);
-    height: var(--input-height, fit-content);
-    background-color: var(--input-background, white);
+    flex: 1;
+    background-color: transparent;
     font-size: var(--input-font-size, 16px) !important;
     font-family: var(--input-font-family, Euclid Circular A);
-    border-radius: var(--input-radius, 4px);
+    border-radius: inherit;
     outline: none;
     padding: var(--input-padding, 16px);
     font-weight: var(--input-font-weight, 500);
-    width: var(--input-width, fit-content);
-    margin: var(--input-margin, 0px 0px 12px 0px);
-    -webkit-appearance: none !important; /* For Safari MWeb */
-    box-shadow: var(--input-box-shadow, 0px 1px 8px #2f537733);
-    border: var(--input-border, none);
+    border: none;
     resize: none;
-    visibility: var(--input-visibility, visible);
     text-align: var(--input-text-align, left);
     color: var(--input-text-color);
+    -webkit-appearance: none !important;
+    min-width: 0px;
   }
 
-  textarea:focus,
-  input:focus {
+  .input-element {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0px;
+    height: 100%;
+    order: var(--input-element-order, 2);
+  }
+
+  /* Input wrapper - handles layout, border, shadow */
+  .input-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: var(--input-width, fit-content);
+    height: var(--input-height, fit-content);
+    margin: var(--input-margin, 0px 0px 12px 0px);
+    border: var(--input-border, none);
+    border-radius: var(--input-radius, 4px);
+    background-color: var(--input-background, white);
+    box-shadow: var(--input-box-shadow, 0px 1px 8px #2f537733);
+    box-sizing: var(--input-box-sizing, border-box);
+  }
+
+  .input-wrapper-focus {
     border: var(--input-focus-border);
   }
 
@@ -263,6 +312,58 @@
     flex-direction: column;
     margin: var(--input-container-margin);
     padding: var(--input-container-padding);
+  }
+
+  .image-container {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    order: var(--input-image-container-order, 3);
+    height: var(--input-image-container-height, fit-content);
+    width: var(--input-image-container-width, fit-content);
+    padding: var(--input-image-container-padding, 0px 16px);
+    margin: var(--input-image-container-margin);
+  }
+
+  .input-image {
+    cursor: var(--input-image-cursor, pointer);
+    height: var(--input-image-height);
+    width: var(--input-image-width);
+    padding: var(--input-image-padding);
+    margin: var(--input-image-margin);
+    border: var(--input-image-border, none);
+    filter: var(--input-image-filter, none);
+    object-fit: var(--input-image-object-fit, contain);
+    border-radius: var(--input-image-border-radius, inherit);
+    background: var(--input-image-background, var(--input-background));
+    transition: var(--input-image-transition, none);
+  }
+
+  .input-image:hover {
+    border: var(--input-image-hover-border, var(--input-image-border));
+    background: var(--input-image-hover-background, var(--input-image-background));
+  }
+
+  .left-content {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    order: var(--input-left-content-order, 1);
+    height: var(--input-left-content-height, fit-content);
+    width: var(--input-left-content-width, fit-content);
+    padding: var(--input-left-content-padding, 0px 0px 0px 16px);
+    margin: var(--input-left-content-margin);
+  }
+
+  .right-content {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    order: var(--input-right-content-order, 4);
+    height: var(--input-right-content-height, fit-content);
+    width: var(--input-right-content-width, fit-content);
+    padding: var(--input-right-content-padding, 0px 16px 0px 0px);
+    margin: var(--input-right-content-margin);
   }
 
   .label {

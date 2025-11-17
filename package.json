@@ -5,6 +5,7 @@
     "dev": "vite dev --host",
     "build": "vite build && npm run package",
     "preview": "vite preview",
+    "prepare": "npm run package",
     "package": "svelte-kit sync && svelte-package && publint",
     "prepublishOnly": "npm run package",
     "test": "npm run test:integration && npm run test:unit",

@@ -124,6 +124,8 @@
     --button-width: 100%;
     --input-border: none;
     --input-focus-border: none;
+    --input-margin: none;
+    --input-box-shadow: none;
     border: var(--input-button-container-border);
     background: var(--input-button-container-background);
     padding: var(--input-button-container-padding);
