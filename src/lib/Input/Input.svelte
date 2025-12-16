@@ -23,6 +23,8 @@
     name = '',
     testId = '',
     textTransformers = [],
+    textViewTransformers = [],
+    onFocus = () => {},
     onFocusout = () => {},
     onInput = () => {},
     onPaste = () => {},
@@ -60,7 +62,7 @@
     return valueValidation;
   });
 
-  let showErrorMessage = $derived(validationState === 'Invalid');
+  const showErrorMessage = $derived(validationState === 'Invalid');
 
   function handleOnInput(event: Event) {
     if (inputElement === null) {
@@ -81,12 +83,24 @@
       }
       if (numberLength > maxLength) {
         const existingInput = value;
-        if (existingInput.length == maxLength) {
-          inputElement.value = value;
+        if (existingInput.length === maxLength) {
+          let finalValue = value;
+          finalValue = textViewTransformers.reduce((prevValue, currIndexFunction) => {
+            let newValue = currIndexFunction(prevValue);
+            return newValue;
+          }, finalValue);
+          inputElement.value = finalValue;
           return;
         }
+        /**
+         * choose last max length number of digits if length is bigger than max length passed in props
+         */
         currentValue = currentValue.substring(numberLength - maxLength);
       }
+      currentValue = textViewTransformers.reduce((prevValue, currIndexFunction) => {
+        let newValue = currIndexFunction(prevValue);
+        return newValue;
+      }, currentValue);
       inputElement.value = currentValue;
     }
     value = inputElement.value;
@@ -128,7 +142,12 @@
           /**
            * choose last max length number of digits if length is bigger than max length passed in props
            */
-          const finalValue = filteredNumber.substring(filteredNumberLength - maxLength);
+          let finalValue = filteredNumber.substring(filteredNumberLength - maxLength);
+          finalValue = textViewTransformers.reduce((prevValue, currIndexFunction) => {
+            let newValue = currIndexFunction(prevValue);
+            return newValue;
+          }, finalValue);
+          inputElement.value = finalValue;
           // Adding reactivity
           value = finalValue;
           onPaste(event);
@@ -167,6 +186,7 @@
       {placeholder}
       autocomplete={autoComplete}
       {name}
+      onfocus={onFocus}
       onfocusout={_onFocusOut}
       oninput={handleOnInput}
       onpaste={handleOnPaste}
@@ -185,9 +205,11 @@
       {placeholder}
       autocomplete={autoComplete}
       {name}
+      onfocus={onFocus}
       onfocusout={_onFocusOut}
       oninput={handleOnInput}
-      onpaste={onPaste}
+      onpaste={handleOnPaste}
+      onclick={onClick}
       data-pw={testId}
       class:action-input={actionInput}
       disabled={disable}
